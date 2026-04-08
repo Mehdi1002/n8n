@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alertes Animateurs</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #4f46e5;
+    --success: #059669;
+    --success-light: #d1fae5;
+    --warning: #d97706;
+    --warning-light: #fef3c7;
+    --danger: #dc2626;
+    --danger-light: #fee2e2;
+    --border: #e5e7eb;
+    --text: #111827;
+    --text-secondary: #6b7280;
+    --gray-light: #f3f4f6;
+  }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #f9fafb; color: var(--text); }
+
+  /* LOGIN */
+  #login-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  }
+  .login-card {
+    background: white; border-radius: 16px; padding: 40px 36px;
+    width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    text-align: center;
+  }
+  .login-card .icon { font-size: 38px; margin-bottom: 10px; }
+  .login-card h1 { font-size: 21px; font-weight: 700; }
+  .login-card p  { font-size: 14px; color: var(--text-secondary); margin: 7px 0 26px; }
+  .zone-select-login {
+    width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+    border-radius: 9px; font-size: 15px; margin-bottom: 14px;
+    background: white; color: var(--text); cursor: pointer;
+  }
+  .zone-select-login:focus { outline: none; border-color: var(--primary); }
+  .pin-input {
+    width: 100%; padding: 13px; border: 1.5px solid var(--border);
+    border-radius: 9px; font-size: 24px; text-align: center;
+    letter-spacing: 10px; font-weight: 700; margin-bottom: 10px; color: var(--text);
+  }
+  .pin-input:focus { outline: none; border-color: var(--primary); }
+  .pin-input.error { border-color: var(--danger); animation: shake .3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+  .login-error { color: var(--danger); font-size: 13px; margin-bottom: 12px; min-height: 18px; font-weight: 500; }
+  .btn-login {
+    width: 100%; padding: 13px; border-radius: 9px; border: none;
+    background: var(--primary); color: white; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn-login:hover { opacity: .88; }
+
+  /* APP */
+  #app-screen { display: none; }
+  header {
+    background: var(--primary); color: white;
+    padding: 13px 22px; display: flex; align-items: center;
+    justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 16px; font-weight: 600; }
+  .header-meta { font-size: 11px; opacity: .75; margin-top: 2px; }
+  .header-right { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; }
+  .zone-badge {
+    background: rgba(255,255,255,.2); padding: 4px 12px;
+    border-radius: 20px; font-size: 13px; font-weight: 600;
+  }
+  .btn-sm {
+    padding: 6px 13px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    border: 1.5px solid rgba(255,255,255,.5); background: transparent; color: white;
+    font-weight: 500; white-space: nowrap;
+  }
+  .btn-sm:hover { background: rgba(255,255,255,.15); }
+
+  .main { max-width: 1400px; margin: 0 auto; padding: 18px 14px; }
+
+  /* Stats */
+  .stats-bar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .stat-card {
+    background: white; border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 16px; flex: 1; min-width: 100px;
+  }
+  .stat-card .val { font-size: 24px; font-weight: 700; }
+  .stat-card .lbl { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+
+  /* Filtres */
+  .filter-bar {
+    background: white; border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 16px;
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  .filter-bar label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .filter-select {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; background: white; color: var(--text); cursor: pointer;
+  }
+  .filter-select:focus { outline: none; border-color: var(--primary); }
+  .filter-input {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; flex: 1; min-width: 160px;
+  }
+  .filter-input:focus { outline: none; border-color: var(--primary); }
+  .btn-clear {
+    padding: 6px 12px; border-radius: 7px; border: 1px solid var(--border);
+    background: white; color: var(--text-secondary); font-size: 12px; cursor: pointer;
+  }
+  .btn-clear:hover { background: var(--gray-light); }
+
+  /* Tableau */
+  .table-wrap {
+    background: white; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .table-header {
+    padding: 13px 18px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  }
+  .table-header h2 { font-size: 14px; font-weight: 600; }
+  .table-actions { display: flex; gap: 8px; align-items: center; }
+
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 900px; }
+  th {
+    background: var(--gray-light); text-align: left;
+    padding: 9px 12px; font-size: 11px; font-weight: 600;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: .04em;
+    white-space: nowrap;
+  }
+  td { padding: 10px 12px; border-top: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:hover td { background: #fafafa; }
+
+  /* Colonnes fixes */
+  td.col-zone    { font-weight: 600; white-space: nowrap; }
+  td.col-id      { font-family: monospace; font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+  td.col-role    { white-space: nowrap; }
+  td.col-client  { font-family: monospace; font-size: 12px; white-space: nowrap; }
+  td.col-type    { white-space: nowrap; }
+  td.col-produit { font-family: monospace; font-size: 12px; white-space: nowrap; }
+  td.col-desc    { max-width: 280px; }
+  td.col-date    { white-space: nowrap; font-size: 12px; color: var(--text-secondary); }
+  td.col-reponse { min-width: 190px; }
+
+  .prio {
+    display: inline-block; padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+  }
+  .prio-haute   { background: var(--danger-light);  color: var(--danger); }
+  .prio-moyenne { background: var(--warning-light); color: var(--warning); }
+  .prio-basse   { background: var(--success-light); color: var(--success); }
+
+  .response-select {
+    border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 5px 9px; font-size: 12px; background: white;
+    cursor: pointer; width: 100%; transition: border-color .15s;
+  }
+  .response-select:focus { outline: none; border-color: var(--primary); }
+  .response-select.answered { border-color: var(--success); background: var(--success-light); }
+
+  .btn-save {
+    padding: 5px 11px; border-radius: 6px; border: none;
+    background: var(--primary); color: white; font-size: 12px;
+    font-weight: 500; cursor: pointer; white-space: nowrap; margin-top: 5px; width: 100%;
+  }
+  .btn-save:hover { opacity: .85; }
+  .btn-save:disabled { opacity: .5; cursor: not-allowed; }
+
+  .btn-refresh {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: white; color: var(--text); font-size: 12px; cursor: pointer;
+  }
+  .btn-refresh:hover { background: var(--gray-light); }
+
+  .loading { text-align: center; padding: 40px; color: var(--text-secondary); font-size: 14px; }
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid var(--border); border-top-color: var(--primary);
+    border-radius: 50%; animation: spin .7s linear infinite;
+    margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 40px; color: var(--text-secondary); }
+
+  #toast {
+    position: fixed; bottom: 22px; right: 22px;
+    padding: 11px 18px; border-radius: 10px; font-size: 13px;
+    font-weight: 500; color: white; box-shadow: 0 4px 16px rgba(0,0,0,.2);
+    opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 999;
+  }
+  #toast.show { opacity: 1; }
+  #toast.ok  { background: var(--success); }
+  #toast.err { background: var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  ⚙️  CONFIGURATION
+  ============================================================ -->
+<script>
+const CONFIG = {
+
+  API_KEY: "AIzaSyBPlnK2pW8VD-VqPwZW1lw7H7k5k_-d-TY",
+
+  // ── Nom de l'onglet dans chaque Sheet ───────────────────────
+  SHEET_NAME: "Feuille 1",
+
+  // ── Mapping des colonnes (lettre dans le Sheet) ─────────────
+  // Modifie les lettres si l'ordre dans tes Sheets est différent
+  COLUMNS: {
+    zone:        "A",
+    id_alerte:   "B",
+    role:        "C",
+    code_client: "D",
+    type_alerte: "E",
+    code_produit:"F",
+    description: "G",
+    date:        "H",
+    reponse:     "I",   // ← la réponse sera écrite ici
+  },
+
+  // Première ligne de données (2 si ligne d'entête, 1 sinon)
+  DATA_START_ROW: 2,
+
+  // ── Options de réponse ──────────────────────────────────────
+  REPONSES: [
+    "",
+    "✅ Traité",
+    "🔄 En cours",
+    "⚠️ En attente",
+    "❌ Non applicable",
+    "📋 Transmis",
+    "👁️ Pris en charge",
+  ],
+
+  // ── Zones : nom affiché, PIN, ID du Google Sheet ────────────
+  ZONES: [
+    {
+      nom: "Centre A",
+      pin: "1111",
+      sheetId: "1jhpxENIE8DN3jbS9u5ysq4fhHma2SSSyztn0EMaaoFQ",
+    },
+    {
+      nom: "Centre B",
+      pin: "2222",
+      sheetId: "1a5jnl-Lc1HEzqmo9S9ipJn76TxpxJbm_gxXAo11CJkI",
+    },
+    {
+      nom: "Centre Est",
+      pin: "3333",
+      sheetId: "1sXhZZ0Y5N191n0Yx8Adnbp4B3GyDcfWgXiq6dJrsNVg",
+    },
+    {
+      nom: "Centre Ouest",
+      pin: "4444",
+      sheetId: "1lc8iJXJZVWrdwgDuji_7qbVY_XZjLtFI0Yf12ikMUos",
+    },
+    {
+      nom: "Est",
+      pin: "5555",
+      sheetId: "1PKh4RXYbjOOliV9AGysh0sRwUrSqbFIBYvn7FOQ5-9s",
+    },
+    {
+      nom: "Est 2",
+      pin: "6666",
+      sheetId: "14r0mAEp__qTWS8ieC6gz_Fhsp57bvGUguOz46ah_LAg",
+    },
+    {
+      nom: "Ouest A",
+      pin: "7777",
+      sheetId: "1Y7ljKbqfFFcwa8Ruo0Mi3tsyjsnsCOPmPBSfBGGIa0c",
+    },
+    {
+      nom: "Sud",
+      pin: "8888",
+      sheetId: "1A_VhOyUiZF1YdlNx-CHqKDAkyjb8bHpbrl7Lom18oZs",
+    },
+  ],
+};
+</script>
+<!-- ============================================================ -->
+
+
+<!-- ÉCRAN LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="icon">🚨</div>
+    <h1>Alertes Animateurs</h1>
+    <p>Sélectionne ta zone et saisis ton code PIN</p>
+    <select class="zone-select-login" id="login-zone">
+      <option value="">— Choisir ma zone —</option>
+    </select>
+    <input class="pin-input" type="password" inputmode="numeric"
+           maxlength="6" placeholder="••••" id="login-pin"
+           onkeydown="if(event.key==='Enter') doLogin()">
+    <div class="login-error" id="login-error"></div>
+    <button class="btn-login" onclick="doLogin()">Accéder à mes alertes</button>
+  </div>
+</div>
+
+
+<!-- APP -->
+<div id="app-screen">
+  <header>
+    <div>
+      <h1>🚨 Alertes Animateurs</h1>
+      <div class="header-meta" id="last-refresh">Chargement...</div>
+    </div>
+    <div class="header-right">
+      <span class="zone-badge" id="header-zone">—</span>
+      <button class="btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn-sm" onclick="logout()">Déconnexion</button>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="val" id="stat-total">—</div>
+        <div class="lbl">Total alertes</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" style="color:var(--success)" id="stat-done">—</div>
+        <div class="lbl">Traitées</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" style="color:var(--warning)" id="stat-pending">—</div>
+        <div class="lbl">En cours</div>
+      </div>
+      <div class="stat-card">
+        <div class="val" style="color:var(--danger)" id="stat-open">—</div>
+        <div class="lbl">Sans réponse</div>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-bar">
+      <label>Filtrer :</label>
+      <select class="filter-select" id="f-statut" onchange="applyFilters()">
+        <option value="">Tous statuts</option>
+        <option value="open">Sans réponse</option>
+        <option value="answered">Répondues</option>
+      </select>
+      <select class="filter-select" id="f-type" onchange="applyFilters()">
+        <option value="">Tous types</option>
+      </select>
+      <select class="filter-select" id="f-role" onchange="applyFilters()">
+        <option value="">Tous rôles</option>
+      </select>
+      <input class="filter-input" type="text" id="f-search"
+             placeholder="Recherche (client, produit, description...)"
+             oninput="applyFilters()">
+      <button class="btn-clear" onclick="clearFilters()">✕ Effacer</button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <h2 id="table-title">Mes alertes</h2>
+        <div class="table-actions">
+          <span id="count-label" style="font-size:12px;color:var(--text-secondary)"></span>
+          <button class="btn-refresh" onclick="loadData()">↻ Actualiser</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <div id="table-container">
+          <div class="loading"><span class="spinner"></span>Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── STATE ──
+let currentZone = null;
+let allAlerts   = [];       // données brutes du Sheet
+let filtered    = [];       // après filtres
+
+// ── INIT ──
+document.addEventListener("DOMContentLoaded", () => {
+  const sel = document.getElementById("login-zone");
+  CONFIG.ZONES.forEach(z => {
+    const o = document.createElement("option");
+    o.value = z.nom; o.textContent = z.nom;
+    sel.appendChild(o);
+  });
+  const saved = sessionStorage.getItem("zone");
+  if (saved) {
+    const z = CONFIG.ZONES.find(z => z.nom === saved);
+    if (z) { currentZone = z; showApp(); }
+  }
+});
+
+// ── LOGIN ──
+function doLogin() {
+  const nom = document.getElementById("login-zone").value;
+  const pin = document.getElementById("login-pin").value.trim();
+  const err = document.getElementById("login-error");
+  const inp = document.getElementById("login-pin");
+  err.textContent = "";
+  if (!nom) { err.textContent = "Choisis ta zone."; return; }
+  if (!pin) { err.textContent = "Saisis ton code PIN."; return; }
+  const zone = CONFIG.ZONES.find(z => z.nom === nom);
+  if (!zone || zone.pin !== pin) {
+    err.textContent = "Code PIN incorrect.";
+    inp.value = "";
+    inp.classList.add("error");
+    setTimeout(() => inp.classList.remove("error"), 400);
+    return;
+  }
+  currentZone = zone;
+  sessionStorage.setItem("zone", zone.nom);
+  showApp();
+}
+
+function showApp() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("app-screen").style.display   = "block";
+  document.getElementById("header-zone").textContent    = currentZone.nom;
+  document.getElementById("table-title").textContent    = "Alertes — " + currentZone.nom;
+  loadData();
+  setInterval(loadData, 120000);
+}
+
+function logout() {
+  sessionStorage.removeItem("zone");
+  currentZone = null; allAlerts = []; filtered = [];
+  document.getElementById("login-pin").value  = "";
+  document.getElementById("login-zone").value = "";
+  document.getElementById("login-error").textContent = "";
+  document.getElementById("app-screen").style.display   = "none";
+  document.getElementById("login-screen").style.display = "flex";
+}
+
+// ── COLONNE → INDEX ──
+function ci(key) {
+  return (CONFIG.COLUMNS[key] || "A").toUpperCase().charCodeAt(0) - 65;
+}
+
+// ── CHARGEMENT SHEET DE LA ZONE ──
+async function loadData() {
+  if (!currentZone) return;
+  document.getElementById("table-container").innerHTML =
+    '<div class="loading"><span class="spinner"></span>Chargement...</div>';
+
+  const range = encodeURIComponent(`${CONFIG.SHEET_NAME}!A:Z`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${currentZone.sheetId}/values/${range}?key=${CONFIG.API_KEY}`;
+
+  try {
+    const res  = await fetch(url);
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || "HTTP " + res.status);
+    }
+    const data = await res.json();
+    const rows = (data.values || []).slice(CONFIG.DATA_START_ROW - 1);
+
+    allAlerts = rows
+      .map((row, i) => ({
+        rowIndex:    CONFIG.DATA_START_ROW + i,
+        zone:        row[ci("zone")]        || "",
+        id_alerte:   row[ci("id_alerte")]   || "",
+        role:        row[ci("role")]        || "",
+        code_client: row[ci("code_client")] || "",
+        type_alerte: row[ci("type_alerte")] || "",
+        code_produit:row[ci("code_produit")]|| "",
+        description: row[ci("description")] || "",
+        date:        row[ci("date")]        || "",
+        reponse:     row[ci("reponse")]     || "",
+      }))
+      .filter(a => a.id_alerte || a.description);  // ignore lignes vides
+
+    document.getElementById("last-refresh").textContent =
+      "Actualisé à " + new Date().toLocaleTimeString("fr-FR");
+
+    populateFilterOptions();
+    applyFilters();
+
+  } catch(e) {
+    console.error(e);
+    showToast("Erreur chargement : " + e.message, "err");
+    document.getElementById("table-container").innerHTML =
+      `<div class="empty">❌ Impossible de charger les données.<br>
+       <small style="color:var(--text-secondary)">${e.message}</small><br><br>
+       Vérifie que le Sheet est bien partagé en <strong>édition publique</strong>
+       et que ta clé API est valide.</div>`;
+  }
+}
+
+// ── FILTRES ──
+function populateFilterOptions() {
+  const types = [...new Set(allAlerts.map(a => a.type_alerte).filter(Boolean))].sort();
+  const roles = [...new Set(allAlerts.map(a => a.role).filter(Boolean))].sort();
+
+  const fType = document.getElementById("f-type");
+  const fRole = document.getElementById("f-role");
+  const curType = fType.value;
+  const curRole = fRole.value;
+
+  fType.innerHTML = '<option value="">Tous types</option>' +
+    types.map(t => `<option value="${esc(t)}" ${t===curType?"selected":""}>${esc(t)}</option>`).join("");
+  fRole.innerHTML = '<option value="">Tous rôles</option>' +
+    roles.map(r => `<option value="${esc(r)}" ${r===curRole?"selected":""}>${esc(r)}</option>`).join("");
+}
+
+function applyFilters() {
+  const statut = document.getElementById("f-statut").value;
+  const type   = document.getElementById("f-type").value;
+  const role   = document.getElementById("f-role").value;
+  const search = document.getElementById("f-search").value.toLowerCase().trim();
+
+  filtered = allAlerts.filter(a => {
+    if (statut === "open"     && a.reponse)  return false;
+    if (statut === "answered" && !a.reponse) return false;
+    if (type && a.type_alerte !== type)      return false;
+    if (role && a.role !== role)             return false;
+    if (search) {
+      const hay = [a.code_client, a.code_produit, a.description, a.id_alerte, a.role]
+        .join(" ").toLowerCase();
+      if (!hay.includes(search)) return false;
+    }
+    return true;
+  });
+
+  updateStats();
+  renderTable();
+}
+
+function clearFilters() {
+  document.getElementById("f-statut").value = "";
+  document.getElementById("f-type").value   = "";
+  document.getElementById("f-role").value   = "";
+  document.getElementById("f-search").value = "";
+  applyFilters();
+}
+
+// ── STATS (sur allAlerts, pas filtered) ──
+function updateStats() {
+  const total   = allAlerts.length;
+  const done    = allAlerts.filter(a => a.reponse !== "").length;
+  const pending = allAlerts.filter(a => a.reponse && a.reponse.includes("cours")).length;
+  const open    = allAlerts.filter(a => a.reponse === "").length;
+  document.getElementById("stat-total").textContent   = total;
+  document.getElementById("stat-done").textContent    = done;
+  document.getElementById("stat-pending").textContent = pending;
+  document.getElementById("stat-open").textContent    = open;
+  document.getElementById("count-label").textContent  =
+    filtered.length < total ? `${filtered.length} / ${total} alertes` : `${total} alertes`;
+}
+
+// ── RENDU TABLE ──
+function renderTable() {
+  if (!filtered.length) {
+    document.getElementById("table-container").innerHTML =
+      allAlerts.length
+        ? '<div class="empty">Aucune alerte ne correspond aux filtres.</div>'
+        : '<div class="empty">✅ Aucune alerte pour le moment !</div>';
+    return;
+  }
+
+  const rows = filtered.map(a => {
+    const opts = CONFIG.REPONSES.map(r =>
+      `<option value="${esc(r)}" ${r === a.reponse ? "selected" : ""}>${r || "— Choisir —"}</option>`
+    ).join("");
+
+    return `
+      <tr id="row-${a.rowIndex}">
+        <td class="col-zone">${esc(a.zone)}</td>
+        <td class="col-id">${esc(a.id_alerte)}</td>
+        <td class="col-role">${esc(a.role)}</td>
+        <td class="col-client">${esc(a.code_client)}</td>
+        <td class="col-type">${esc(a.type_alerte)}</td>
+        <td class="col-produit">${esc(a.code_produit)}</td>
+        <td class="col-desc">${esc(a.description)}</td>
+        <td class="col-date">${esc(a.date)}</td>
+        <td class="col-reponse">
+          <select class="response-select ${a.reponse ? "answered" : ""}"
+                  data-row="${a.rowIndex}"
+                  onchange="this.classList.toggle('answered', this.value !== '')">
+            ${opts}
+          </select>
+          <button class="btn-save" id="btn-${a.rowIndex}"
+                  onclick="saveReponse(${a.rowIndex})">
+            Enregistrer
+          </button>
+        </td>
+      </tr>`;
+  }).join("");
+
+  document.getElementById("table-container").innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Zone</th>
+          <th>Id Alerte</th>
+          <th>Rôle</th>
+          <th>Code Client</th>
+          <th>Type Alerte</th>
+          <th>Code Produit</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Réponse</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function esc(s) {
+  if (!s) return "";
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+// ── ÉCRITURE DANS LE SHEET ──
+async function saveReponse(rowIndex) {
+  const select = document.querySelector(`select[data-row="${rowIndex}"]`);
+  const btn    = document.getElementById(`btn-${rowIndex}`);
+  if (!select || !btn) return;
+
+  const val   = select.value;
+  const col   = CONFIG.COLUMNS.reponse;
+  const range = encodeURIComponent(`${CONFIG.SHEET_NAME}!${col}${rowIndex}`);
+  const url   = `https://sheets.googleapis.com/v4/spreadsheets/${currentZone.sheetId}/values/${range}?valueInputOption=USER_ENTERED&key=${CONFIG.API_KEY}`;
+
+  btn.textContent = "...";
+  btn.disabled    = true;
+
+  try {
+    const res = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ values: [[val]] }),
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error?.message || "HTTP " + res.status);
+    }
+    // Met à jour le cache local
+    const a = allAlerts.find(a => a.rowIndex === rowIndex);
+    if (a) a.reponse = val;
+    updateStats();
+    showToast("✅ Réponse enregistrée !", "ok");
+    btn.textContent = "✓ Sauvé";
+    setTimeout(() => { btn.textContent = "Enregistrer"; btn.disabled = false; }, 2500);
+  } catch(e) {
+    showToast("❌ " + e.message, "err");
+    btn.textContent = "Enregistrer";
+    btn.disabled    = false;
+  }
+}
+
+// ── EXPORT CSV (données filtrées) ──
+function exportCSV() {
+  const src = filtered.length ? filtered : allAlerts;
+  if (!src.length) { showToast("Aucune donnée à exporter", "err"); return; }
+
+  const headers = ["Zone","Id Alerte","Rôle","Code Client","Type Alerte",
+                   "Code Produit","Description","Date","Réponse"];
+  const csvRows = [
+    headers.join(";"),
+    ...src.map(a =>
+      [a.zone, a.id_alerte, a.role, a.code_client, a.type_alerte,
+       a.code_produit, a.description, a.date, a.reponse]
+        .map(v => `"${(v||"").replace(/"/g,'""')}"`)
+        .join(";")
+    )
+  ];
+
+  const blob = new Blob(["\uFEFF" + csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href  = URL.createObjectURL(blob);
+  const today = new Date().toISOString().slice(0,10);
+  link.download = `alertes_${currentZone.nom.replace(/\s+/g,"-")}_${today}.csv`;
+  link.click();
+  showToast("✅ Export CSV téléchargé !", "ok");
+}
+
+// ── TOAST ──
+function showToast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = `show ${type}`;
+  setTimeout(() => { t.className = ""; }, 3200);
+}
+</script>
+</body>
+</html>
