@@ -229,12 +229,51 @@ const CONFIG = {
   // ── Options de réponse ──────────────────────────────────────
   REPONSES: [
     "",
-    "✅ Traité",
-    "🔄 En cours",
-    "⚠️ En attente",
-    "❌ Non applicable",
-    "📋 Transmis",
-    "👁️ Pris en charge",
+    "Arrivée tardive du personnel",
+    "Assure la DD le soir",
+    "Attente de l'arrivée du semi pour effectuer le chargement",
+    "Batterie déchargée",
+    "BL saisi au dépôt",
+    "Client à repositionner",
+    "Client bloqué",
+    "Client FD",
+    "Client non visité",
+    "Clients à faible potentiel visité chaque 15 jours",
+    "Décalage entre les parfums",
+    "Dernier client",
+    "Données mobiles désactivées",
+    "Erreur de manipulation",
+    "Erreur d'ouverture service",
+    "Facture annulée",
+    "Hors secteur",
+    "Indisponible au dépôt lors du chargement",
+    "Journée boissons",
+    "Journée lait blanc",
+    "Le véhicule était en panne",
+    "Le véhicule visite plusieurs secteurs en parallèle",
+    "Livraison d'une commande",
+    "Livraison par commande",
+    "Mise à jour client",
+    "Ne commercialise pas les laits blancs",
+    "Ne commercialise pas les produits frais",
+    "Oubli de pointage",
+    "Problème de connexion",
+    "Problème de synchronisation",
+    "Problème smartphone",
+    "Produit disponible demande de chargement non acceptée",
+    "Rationnement",
+    "Réouverture service",
+    "Rotation effectuée",
+    "Route fermée",
+    "Rupture chez l'avant dernier client",
+    "Rupture dépôt",
+    "Secteur lointain",
+    "Tournée gros",
+    "Véhicule à l'arrêt",
+    "Véhicule kms",
+    "Véhicule non opérationnel",
+    "Véhicule superette",
+    "Véhicule visite plusieurs secteurs en parallèle",
   ],
 
   // ── Zones : nom affiché, PIN, ID du Google Sheet ────────────
@@ -548,8 +587,8 @@ function clearFilters() {
 function updateStats() {
   const total   = allAlerts.length;
   const done    = allAlerts.filter(a => a.reponse !== "").length;
-  const pending = allAlerts.filter(a => a.reponse && a.reponse.includes("cours")).length;
   const open    = allAlerts.filter(a => a.reponse === "").length;
+  const pending = 0; // non utilisé avec les nouvelles réponses
   document.getElementById("stat-total").textContent   = total;
   document.getElementById("stat-done").textContent    = done;
   document.getElementById("stat-pending").textContent = pending;
@@ -569,9 +608,12 @@ function renderTable() {
   }
 
   const rows = filtered.map(a => {
+    // Si la réponse existante n'est pas dans la liste, on l'ajoute comme option sélectionnée
+    const reponseExistante = a.reponse && !CONFIG.REPONSES.includes(a.reponse)
+      ? `<option value="${esc(a.reponse)}" selected>${esc(a.reponse)}</option>` : "";
     const opts = CONFIG.REPONSES.map(r =>
       `<option value="${esc(r)}" ${r === a.reponse ? "selected" : ""}>${r || "— Choisir —"}</option>`
-    ).join("");
+    ).join("") + reponseExistante;
 
     return `
       <tr id="row-${a.rowIndex}">
